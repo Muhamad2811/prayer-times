@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مواقيت الصلاة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #d4a843;
+  --gold-light: #f0c96a;
+  --gold-dim: rgba(212,168,67,0.12);
+  --gold-border: rgba(212,168,67,0.25);
+  --text: #e8e0d0;
+  --text-dim: #7a7060;
+  --text-mid: #b0a898;
+  --surface: rgba(255,255,255,0.04);
+  --card-border: rgba(255,255,255,0.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #05080f;
+  color: var(--text);
+  font-family: 'Cairo', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.sky-bg {
+  position: fixed; inset: 0; z-index: 0;
+  background: radial-gradient(ellipse 100% 60% at 50% 0%, #0d2045 0%, #071020 50%, #05080f 100%);
+}
+.stars {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 32% 8%,  rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 55% 15%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 5%,  rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 22%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 42% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 40%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 78% 12%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 42%, rgba(255,255,255,0.35) 0%, transparent 100%);
+}
+.horizon-glow {
+  position: fixed; bottom:0; left:0; right:0; height:35vh; z-index:0;
+  background: linear-gradient(to top, rgba(30,60,100,0.3) 0%, transparent 100%);
+}
+.wrapper {
+  position: relative; z-index: 1;
+  max-width: 700px; margin: 0 auto; padding: 0 18px 80px;
+}
+
+/* ── Header ── */
+header {
+  text-align: center; padding: 44px 0 28px;
+  opacity:0; animation: fadeDown .7s ease forwards .1s;
+}
+.mosque-icon { font-size:2.2rem; display:block; margin-bottom:8px; }
+header h1 {
+  font-family:'Amiri',serif;
+  font-size:clamp(1.8rem,5vw,2.6rem);
+  color:var(--gold-light); letter-spacing:1px;
+}
+.location-row {
+  display:flex; align-items:center; justify-content:center;
+  gap:6px; margin-top:10px; font-size:0.85rem; color:var(--text-dim);
+}
+.location-dot { width:6px; height:6px; border-radius:50%; background:var(--gold); display:inline-block; }
+
+/* ── Clock ── */
+.clock-block {
+  text-align:center; margin-bottom:28px;
+  opacity:0; animation: fadeDown .7s ease forwards .3s;
+}
+.clock-time {
+  font-family:'Amiri',serif;
+  font-size:clamp(3rem,10vw,5rem);
+  color:var(--text); line-height:1; letter-spacing:3px;
+}
+.clock-date { color:var(--text-dim); font-size:0.82rem; margin-top:4px; font-weight:300; }
+
+/* ── Next banner ── */
+.next-prayer-banner {
+  background: linear-gradient(135deg, rgba(212,168,67,0.14), rgba(212,168,67,0.06));
+  border:1px solid var(--gold-border); border-radius:16px;
+  padding:18px 24px; margin-bottom:24px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  opacity:0; animation: fadeUp .7s ease forwards .5s;
+  position:relative; overflow:hidden;
+}
+.next-prayer-banner::before {
+  content:''; position:absolute; top:-50%; left:-20%;
+  width:200px; height:200px;
+  background:radial-gradient(circle, rgba(212,168,67,0.08), transparent 70%);
+  pointer-events:none;
+}
+.next-label { font-size:0.75rem; color:var(--text-dim); margin-bottom:2px; }
+.next-name  { font-family:'Amiri',serif; font-size:1.5rem; color:var(--gold-light); }
+.next-time-box { text-align:left; }
+.next-time      { font-family:'Amiri',serif; font-size:1.6rem; color:var(--text); }
+.next-countdown { font-size:0.78rem; color:var(--gold); margin-top:2px; text-align:left; }
+
+/* ── Prayer cards ── */
+.prayers-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:24px;
+  opacity:0; animation: fadeUp .7s ease forwards .7s;
+}
+@media(max-width:400px){ .prayers-grid{ grid-template-columns:1fr; } }
+.prayer-card {
+  background:var(--surface); border:1px solid var(--card-border);
+  border-radius:14px; padding:18px 20px;
+  display:flex; align-items:center; justify-content:space-between;
+  transition:border-color .3s, background .3s;
+  position:relative; overflow:hidden;
+}
+.prayer-card.is-next {
+  background:var(--gold-dim); border-color:var(--gold-border);
+  box-shadow:0 0 30px rgba(212,168,67,0.08);
+}
+.prayer-card.is-next::after {
+  content:''; position:absolute; top:0; right:0;
+  width:3px; height:100%; background:var(--gold); border-radius:0 14px 14px 0;
+}
+.prayer-card.passed { opacity:0.4; }
+.prayer-ar { font-family:'Amiri',serif; font-size:1.15rem; color:var(--text); display:block; }
+.prayer-en { font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; }
+.prayer-time { font-family:'Amiri',serif; font-size:1.3rem; color:var(--text-mid); direction:ltr; }
+.prayer-card.is-next .prayer-time { color:var(--gold-light); }
+.next-tag {
+  position:absolute; top:8px; left:10px;
+  font-size:0.62rem; background:var(--gold); color:#1a1000;
+  padding:2px 7px; border-radius:20px; font-weight:600;
+}
+
+/* ── Status / loader ── */
+.status-msg {
+  background:var(--surface); border:1px solid var(--card-border);
+  border-radius:12px; padding:28px 20px; text-align:center;
+  color:var(--text-dim); font-size:0.88rem;
+  opacity:0; animation: fadeUp .7s ease forwards .7s;
+}
+.btn-locate {
+  background:var(--gold-dim); border:1px solid var(--gold-border);
+  color:var(--gold-light); padding:10px 24px; border-radius:8px;
+  cursor:pointer; font-family:'Cairo',sans-serif; font-size:0.88rem;
+  font-weight:500; margin-top:14px; transition:all .2s; display:inline-block;
+}
+.btn-locate:hover { background:rgba(212,168,67,0.2); }
+
+@keyframes fadeDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp   { from{opacity:0;transform:translateY(14px)}  to{opacity:1;transform:translateY(0)} }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loader {
+  width:28px; height:28px; border:2px solid var(--gold-border);
+  border-top-color:var(--gold); border-radius:50%;
+  animation:spin .8s linear infinite; margin:0 auto 12px;
+}
+</style>
+</head>
+<body>
+<div class="sky-bg"></div>
+<div class="stars"></div>
+<div class="horizon-glow"></div>
+
+<div class="wrapper">
+  <header>
+    <span class="mosque-icon">🕌</span>
+    <h1>مواقيت الصلاة</h1>
+    <div class="location-row">
+      <span class="location-dot"></span>
+      <span id="location-name">جارٍ تحديد الموقع…</span>
+    </div>
+  </header>
+
+  <div class="clock-block">
+    <div class="clock-time" id="clock">--:--:--</div>
+    <div class="clock-date"  id="clock-date">--</div>
+  </div>
+
+  <div id="next-banner" class="next-prayer-banner" style="display:none;">
+    <div>
+      <div class="next-label">الصلاة القادمة</div>
+      <div class="next-name" id="next-name">--</div>
+    </div>
+    <div class="next-time-box">
+      <div class="next-time"      id="next-time">--:--</div>
+      <div class="next-countdown" id="next-countdown">--</div>
+    </div>
+  </div>
+
+  <div id="prayers-container">
+    <div class="status-msg">
+      <div class="loader"></div>
+      جارٍ تحديد موقعك وجلب مواقيت الصلاة…
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── Prayer meta ─────────────────────────────────────────────────── */
+const PRAYERS = [
+  { ar:'الفجر',  en:'Fajr',    icon:'🌙', key:'Fajr'    },
+  { ar:'الشروق', en:'Sunrise', icon:'🌅', key:'Sunrise' },
+  { ar:'الظهر',  en:'Dhuhr',   icon:'☀️', key:'Dhuhr'   },
+  { ar:'العصر',  en:'Asr',     icon:'🌤', key:'Asr'     },
+  { ar:'المغرب', en:'Maghrib', icon:'🌇', key:'Maghrib' },
+  { ar:'العشاء', en:'Isha',    icon:'🌃', key:'Isha'    },
+];
+
+const AR_DAYS = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+/* ─── Clock ──────────────────────────────────────────────────────── */
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+  document.getElementById('clock-date').textContent =
+    `${AR_DAYS[now.getDay()]} — ${now.toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'})}`;
+}
+
+/* ─── Parse "HH:MM (AM|PM)" → decimal hour (24h) ─────────────────── */
+function parseApiTime(str) {
+  // AlAdhan returns e.g. "04:32 (EET)" or "04:32"
+  const clean = str.replace(/\s*\(.*\)/, '').trim();   // strip timezone label
+  const [hStr, mStr] = clean.split(':');
+  return parseInt(hStr, 10) + parseInt(mStr, 10) / 60;
+}
+
+/* ─── Format decimal hour → Arabic 12h display ───────────────────── */
+function fmtHour(h) {
+  h = ((h % 24) + 24) % 24;
+  let hr = Math.floor(h), min = Math.round((h - hr) * 60);
+  if (min === 60) { min = 0; hr = (hr + 1) % 24; }
+  const suffix = hr >= 12 ? 'م' : 'ص';
+  const h12 = hr % 12 || 12;
+  return `${String(h12).padStart(2,'0')}:${String(min).padStart(2,'0')} ${suffix}`;
+}
+
+/* same but from raw "HH:MM" string already in 24h */
+function fmtRaw(str) {
+  return fmtHour(parseApiTime(str));
+}
+
+/* ─── Countdown ──────────────────────────────────────────────────── */
+function fmtCountdown(ms) {
+  if (ms < 0) return '';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (h > 0) return `بعد ${h}س ${m}د`;
+  if (m > 0) return `بعد ${m}د ${s}ث`;
+  return `بعد ${s}ث`;
+}
+
+/* ─── Render ─────────────────────────────────────────────────────── */
+let cachedTimings = null;   // raw API timings object
+
+function renderAll(timings) {
+  cachedTimings = timings;
+  const now    = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();   // minutes since midnight
+
+  // Convert each prayer to minutes-since-midnight for easy comparison
+  function toMin(key) {
+    const h = parseApiTime(timings[key]);
+    return Math.round(h * 60);
+  }
+
+  // Find next prayer (skip Sunrise for "next" logic)
+  let nextIdx = -1, nextDiffMin = Infinity;
+  PRAYERS.forEach((p, i) => {
+    if (p.key === 'Sunrise') return;
+    const pm = toMin(p.key);
+    const diff = pm >= nowMin ? pm - nowMin : 1440 - nowMin + pm;
+    if (diff < nextDiffMin) { nextDiffMin = diff; nextIdx = i; }
+  });
+
+  // Banner
+  const nb = document.getElementById('next-banner');
+  if (nextIdx >= 0) {
+    nb.style.display = 'flex';
+    document.getElementById('next-name').textContent = PRAYERS[nextIdx].ar;
+    document.getElementById('next-time').textContent = fmtRaw(timings[PRAYERS[nextIdx].key]);
+    document.getElementById('next-countdown').textContent = fmtCountdown(nextDiffMin * 60000);
+  }
+
+  // Cards
+  let html = '<div class="prayers-grid">';
+  PRAYERS.forEach((p, i) => {
+    const pm     = toMin(p.key);
+    const passed = pm < nowMin && i !== nextIdx;
+    const isNext = i === nextIdx;
+    html += `
+      <div class="prayer-card ${isNext ? 'is-next' : ''} ${passed ? 'passed' : ''}">
+        ${isNext ? '<span class="next-tag">التالية</span>' : ''}
+        <div>
+          <span class="prayer-ar">${p.icon} ${p.ar}</span>
+          <span class="prayer-en">${p.en}</span>
+        </div>
+        <div class="prayer-time">${fmtRaw(timings[p.key])}</div>
+      </div>`;
+  });
+  html += '</div>';
+  document.getElementById('prayers-container').innerHTML = html;
+}
+
+function tickCountdown() {
+  if (!cachedTimings) return;
+  renderAll(cachedTimings);   // re-render keeps everything in sync
+}
+
+/* ─── Geolocation → AlAdhan API ─────────────────────────────────── */
+function onLocation(pos) {
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+
+  // 1. Reverse geocode — try to get sub-district / neighbourhood
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ar&zoom=14`)
+    .then(r => r.json())
+    .then(d => {
+      const a = d.address;
+      // Pick most specific available name
+      const place =
+        a.quarter || a.suburb || a.neighbourhood ||
+        a.village || a.town   || a.city          ||
+        a.county  || a.state  || 'موقعك';
+      const country = a.country || '';
+      document.getElementById('location-name').textContent =
+        country ? `${place}، ${country}` : place;
+    })
+    .catch(() => {
+      document.getElementById('location-name').textContent =
+        `${lat.toFixed(3)}°، ${lng.toFixed(3)}°`;
+    });
+
+  // 2. Prayer times — AlAdhan API, method 5 = Egyptian General Authority
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2,'0');
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const yyyy = today.getFullYear();
+  const url =
+    `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}` +
+    `?latitude=${lat}&longitude=${lng}&method=5`;
+
+  document.getElementById('prayers-container').innerHTML =
+    `<div class="status-msg"><div class="loader"></div>جارٍ جلب المواقيت…</div>`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (data.code !== 200) throw new Error('API error');
+      renderAll(data.data.timings);
+    })
+    .catch(() => {
+      document.getElementById('prayers-container').innerHTML =
+        `<div class="status-msg">
+          <div style="font-size:1.4rem;margin-bottom:8px">⚠️</div>
+          تعذّر جلب المواقيت، تحقق من الاتصال بالإنترنت
+          <br><button class="btn-locate" onclick="requestLocation()">إعادة المحاولة</button>
+        </div>`;
+    });
+}
+
+function onLocationError() {
+  document.getElementById('location-name').textContent = 'تعذّر تحديد الموقع';
+  document.getElementById('prayers-container').innerHTML =
+    `<div class="status-msg">
+      <div style="font-size:1.5rem;margin-bottom:8px">📍</div>
+      يحتاج الموقع إلى إذن الوصول للموقع الجغرافي
+      <br><button class="btn-locate" onclick="requestLocation()">السماح بالوصول</button>
+    </div>`;
+}
+
+function requestLocation() {
+  navigator.geolocation.getCurrentPosition(onLocation, onLocationError,
+    { enableHighAccuracy: true, timeout: 12000 });
+}
+
+/* ─── Boot ───────────────────────────────────────────────────────── */
+updateClock();
+setInterval(updateClock, 1000);
+setInterval(tickCountdown, 30000);
+
+if (navigator.geolocation) {
+  requestLocation();
+} else {
+  document.getElementById('prayers-container').innerHTML =
+    '<div class="status-msg">متصفحك لا يدعم تحديد الموقع الجغرافي</div>';
+}
+</script>
+</body>
+</html>
